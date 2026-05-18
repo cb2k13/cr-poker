@@ -72,7 +72,10 @@ app.post('/api/auth/google', async (req, res) => {
   try {
     // Verify the Supabase access token and get the Google user
     const { data: { user: googleUser }, error } = await supabase.auth.getUser(access_token);
-    if (error || !googleUser) return res.status(401).json({ error: 'Invalid Google token' });
+    if (error || !googleUser) {
+      console.error('getUser failed:', error?.message, error?.status);
+      return res.status(401).json({ error: `Invalid Google token: ${error?.message || 'no user'}` });
+    }
 
     const authId = googleUser.id;
     const email  = googleUser.email || '';
@@ -110,8 +113,8 @@ app.post('/api/auth/google', async (req, res) => {
     const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, username: newUser.username, chips: newUser.chips, wins: newUser.wins, losses: newUser.losses });
   } catch (err) {
-    console.error('Google auth error:', err.message);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Google auth error:', err.message, err.details || '');
+    res.status(500).json({ error: err.message || 'Server error' });
   }
 });
 
