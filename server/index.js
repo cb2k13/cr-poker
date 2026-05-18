@@ -9,7 +9,18 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'crpoker_secret';
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // ── Supabase client ───────────────────────────────────────────────────────────

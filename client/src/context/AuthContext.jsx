@@ -45,7 +45,8 @@ export function AuthProvider({ children }) {
           if (handlingRef.current) return;
           handlingRef.current = true;
           try {
-            const { data } = await axios.post('/api/auth/google', {
+            const base = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+            const { data } = await axios.post(`${base}/auth/google`, {
               access_token: session.access_token,
             });
             localStorage.setItem('token', data.token);
