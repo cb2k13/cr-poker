@@ -7,9 +7,11 @@ export default function AuthPage() {
   const { signIn } = useAuth();
   const [tab, setTab] = useState('login');
   const [form, setForm] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
+  const [error, setError] = useState(window.__googleAuthError || '');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  // Clear the global error after reading it
+  if (window.__googleAuthError) window.__googleAuthError = null;
 
   const update = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 

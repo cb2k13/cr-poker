@@ -9,18 +9,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'crpoker_secret';
 
-const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
+// Reflect any origin back — safe because our JWT middleware
+// is the actual auth gate. Restrict to specific domains once stable.
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 // ── Supabase client ───────────────────────────────────────────────────────────

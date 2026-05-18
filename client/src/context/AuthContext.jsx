@@ -27,7 +27,10 @@ export function AuthProvider({ children }) {
       // Strip OAuth params from the URL bar
       window.history.replaceState(null, '', window.location.pathname);
     } catch (err) {
-      console.error('Google auth failed:', err.response?.data?.error || err.message);
+      const msg = err.response?.data?.error || err.message || 'Unknown error';
+      console.error('Google auth failed:', msg);
+      // Surface error so AuthPage can display it
+      window.__googleAuthError = msg;
     } finally {
       processingRef.current = false;
     }
