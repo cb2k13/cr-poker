@@ -5,60 +5,71 @@ import { supabase } from '../utils/supabase';
 
 const AuthContext = createContext(null);
 
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const handlingRef = useRef(false);
+  const processingRef = useRef(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-
-    if (token) {
-      // Existing username/password session
-      getProfile()
-        .then(data => setUser(data))
-        .catch(() => localStorage.removeItem('token'))
-        .finally(() => setLoading(false));
-      return;
+  // Exchange a Supabase Google session for our own JWT
+  async function handleGoogleSession(accessToken) {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    try {
+      const { data } = await axios.post(`${API_BASE}/auth/google`, {
+        access_token: accessToken,
+      });
+      localStorage.setItem('token', data.token);
+      setUser(data);
+      // Strip OAuth params from the URL bar
+      window.history.replaceState(null, '', window.location.pathname);
+    } catch (err) {
+      console.error('Google auth failed:', err.response?.data?.error || err.message);
+    } finally {
+      processingRef.current = false;
     }
+  }
 
-    // Detect if we're returning from a Google OAuth redirect.
-    // Supabase appends tokens to the URL hash: #access_token=...
-    // PKCE flow uses query param: ?code=...
-    const isOAuthReturn =
-      window.location.hash.includes('access_token') ||
-      window.location.search.includes('code=');
+  // On mount: restore session (JWT or active Supabase session)
+  useEffect(() => {
+    async function init() {
+      const token = localStorage.getItem('token');
 
-    if (!isOAuthReturn) {
-      // Normal load with no active auth — show login page
+      if (token) {
+        // Existing username/password session
+        try {
+          const data = await getProfile();
+          setUser(data);
+        } catch {
+          localStorage.removeItem('token');
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Check if Supabase already has a session (covers OAuth redirect return).
+      // getSession() works even after Supabase has cleaned the ?code= from the URL.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await handleGoogleSession(session.access_token);
+      }
+
       setLoading(false);
     }
-    // If it IS an OAuth return, keep loading=true so the user
-    // never sees the login page. onAuthStateChange will resolve it.
+
+    init();
   }, []);
 
-  // Handle Supabase OAuth session
+  // Also catch sign-ins that happen while the app is already loaded
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session && !localStorage.getItem('token')) {
-          if (handlingRef.current) return;
-          handlingRef.current = true;
-          try {
-            const base = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
-            const { data } = await axios.post(`${base}/auth/google`, {
-              access_token: session.access_token,
-            });
-            localStorage.setItem('token', data.token);
-            setUser(data);
-            // Clean the OAuth tokens out of the URL without a page reload
-            window.history.replaceState(null, '', window.location.pathname);
-          } catch (err) {
-            console.error('Google sign-in error:', err.response?.data?.error || err.message);
-          } finally {
-            setLoading(false);
-            handlingRef.current = false;
-          }
+          await handleGoogleSession(session.access_token);
+          setLoading(false);
         }
       }
     );
