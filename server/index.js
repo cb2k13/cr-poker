@@ -97,10 +97,11 @@ app.post('/api/auth/google', async (req, res) => {
       return res.json({ token, username: existing.username, chips: existing.chips, wins: existing.wins, losses: existing.losses });
     }
 
-    // New Google user — generate a unique username
-    let username = displayName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 18) || 'player';
+    // New Google user — generate a unique username (min 3 chars required)
+    let username = displayName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 18);
+    if (username.length < 3) username = ('player' + username).slice(0, 18);
     const { data: taken } = await supabase.from('users').select('username').eq('username', username).single();
-    if (taken) username = username + Math.floor(Math.random() * 9000 + 1000);
+    if (taken) username = (username + Math.floor(Math.random() * 9000 + 1000)).slice(0, 18);
 
     const { data: newUser, error: insertErr } = await supabase
       .from('users')
