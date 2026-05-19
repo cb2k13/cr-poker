@@ -113,7 +113,7 @@ function initState(playerChips = START_CHIPS) {
   return {
     phase: 'idle',
     deck: [], playerHand: [], aiHand: [], community: [],
-    pot: 0, playerChips, aiChips: START_CHIPS,
+    pot: 0, playerChips, aiChips: Math.max(0, START_CHIPS * 2 - playerChips),
     playerBet: 0, aiBet: 0, currentBet: BIG_BLIND, bigBlind: BIG_BLIND,
     playerTurn: true, playerIsDealer: true,
     playerActed: false, aiActed: false,
