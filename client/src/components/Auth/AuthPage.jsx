@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { login, register } from '../../utils/api';
 import { supabase } from '../../utils/supabase';
+import SuitsBackground from './SuitsBackground';
 
 export default function AuthPage() {
   const { signIn } = useAuth();
@@ -47,6 +48,7 @@ export default function AuthPage() {
 
   return (
     <div className="auth-bg">
+      <SuitsBackground />
       <div className="auth-card">
         <div className="auth-logo">♠️</div>
         <div className="auth-title">CR POKER</div>
