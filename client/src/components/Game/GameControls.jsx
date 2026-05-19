@@ -80,7 +80,7 @@ export default function GameControls({ gameState, onAction, disabled }) {
 
       {/* Raise */}
       {canRaise && (
-        <>
+        <div className="raise-row">
           <div className="raise-input-group">
             <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>$</span>
             <input
@@ -110,7 +110,7 @@ export default function GameControls({ gameState, onAction, disabled }) {
           >
             ALL IN
           </button>
-        </>
+        </div>
       )}
     </div>
   );
