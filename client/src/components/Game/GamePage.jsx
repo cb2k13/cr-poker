@@ -211,6 +211,10 @@ export default function GamePage() {
               aiBet: base.aiBet + toCall,
               pot: base.pot + toCall,
             };
+            // Preflop: AI is SB (!playerIsDealer), calling gives player (BB) their option
+            if (prev.phase === 'preflop' && !prev.playerIsDealer && !prev.playerActed) {
+              return { ...updated, playerTurn: true };
+            }
             return advanceStreet(updated);
           }
 
