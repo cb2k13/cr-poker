@@ -42,6 +42,11 @@ function doShowdown(state) {
     aiThinking: false,
     playerActed: false,
     aiActed: false,
+    handEnded: {
+      won: result.result === 'player',
+      tied: result.result === 'tie',
+      chipsChange: newP - state.handStartChips,
+    },
   };
 }
 
@@ -113,6 +118,7 @@ function initState(playerChips = START_CHIPS) {
     playerTurn: true, playerIsDealer: true,
     playerActed: false, aiActed: false,
     showAICards: false, message: '', handResult: null,
+    handEnded: null, handStartChips: playerChips,
     aiThinking: false, handNumber: 0,
   };
 }
@@ -151,7 +157,8 @@ export default function GamePage() {
         aiBet: playerIsDealer ? bbAmt : sbAmt,
         currentBet: BIG_BLIND,
         showAICards: false,
-        message: '', handResult: null,
+        message: '', handResult: null, handEnded: null,
+        handStartChips: pChips,
         // Preflop: dealer (SB) acts first. Neither player has formally acted yet.
         playerTurn: playerIsDealer,
         playerIsDealer,
@@ -177,15 +184,18 @@ export default function GamePage() {
         const base = { ...prev, aiThinking: false, aiActed: true };
 
         switch (decision.action) {
-          case 'fold':
+          case 'fold': {
+            const finalChips = prev.playerChips + prev.pot;
             return {
               ...base,
-              playerChips: prev.playerChips + prev.pot,
+              playerChips: finalChips,
               pot: 0,
               phase: 'showdown',
               message: 'AI folds — you win!',
               showAICards: true,
+              handEnded: { won: true, tied: false, chipsChange: finalChips - prev.handStartChips },
             };
+          }
 
           case 'check':
             // If player already acted this street → both have acted, advance
@@ -251,6 +261,7 @@ export default function GamePage() {
             message: 'You folded — AI wins.',
             showAICards: true,
             playerActed: true,
+            handEnded: { won: false, tied: false, chipsChange: prev.playerChips - prev.handStartChips },
           };
 
         case 'check': {
@@ -302,15 +313,21 @@ export default function GamePage() {
     });
   }, [dealNewHand]);
 
-  // Persist stats after each showdown
+  // Persist stats after each hand ends (showdown or fold).
+  // processedHandRef prevents double-calling when user updates trigger re-runs.
+  const refreshUserRef = useRef(refreshUser);
+  const processedHandRef = useRef(null);
+  useEffect(() => { refreshUserRef.current = refreshUser; }, [refreshUser]);
+
   useEffect(() => {
-    if (gs.phase === 'showdown' && gs.handResult && user) {
-      const won = gs.handResult.result === 'player';
-      updateStats(won, won ? BIG_BLIND * 2 : -BIG_BLIND * 2)
-        .then(data => refreshUser(data))
-        .catch(() => {});
-    }
-  }, [gs.phase, gs.handResult]);
+    if (!gs.handEnded || !user || gs.handEnded === processedHandRef.current) return;
+    processedHandRef.current = gs.handEnded;
+    const { won, tied, chipsChange } = gs.handEnded;
+    if (tied) return;
+    updateStats(won, chipsChange)
+      .then(data => refreshUserRef.current(data))
+      .catch(err => console.error('Stats update failed:', err?.response?.data?.error || err.message));
+  }, [gs.handEnded, user]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   const isPlayerTurn = gs.playerTurn && !['idle', 'showdown', 'gameover'].includes(gs.phase);
