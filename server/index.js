@@ -1,18 +1,40 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'crpoker_secret';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-// Reflect any origin back — safe because our JWT middleware
-// is the actual auth gate. Restrict to specific domains once stable.
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set.');
+  process.exit(1);
+}
+
+// ── Security headers ──────────────────────────────────────────────────────────
+app.use(helmet());
+
+// ── CORS — only allow known frontend origins ──────────────────────────────────
+const ALLOWED_ORIGINS = [
+  'https://cr-poker.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:4173',
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    // Allow server-to-server / curl (no origin header) only in development
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error('CORS: origin not allowed'));
+  },
+  credentials: true,
+}));
+
+app.use(express.json({ limit: '16kb' }));
 
 // ── Supabase client ───────────────────────────────────────────────────────────
 const supabase = createClient(
@@ -20,10 +42,26 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-// Quick connectivity check on startup
 supabase.from('users').select('id').limit(1)
   .then(() => console.log('✓ Connected to Supabase'))
   .catch(err => console.error('✗ Supabase connection error:', err.message));
+
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many attempts, please try again later.' },
+});
+
+const statsLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60,             // ~1 hand per second is plenty
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests.' },
+});
 
 // ── Auth middleware ───────────────────────────────────────────────────────────
 function auth(req, res, next) {
@@ -38,13 +76,16 @@ function auth(req, res, next) {
 }
 
 // ── Register ──────────────────────────────────────────────────────────────────
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', authLimiter, async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password || username.length < 3 || password.length < 6) {
     return res.status(400).json({ error: 'Username ≥3 chars, password ≥6 chars' });
   }
+  if (username.length > 18) {
+    return res.status(400).json({ error: 'Username must be ≤18 chars' });
+  }
   try {
-    const hash = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, 12);
     const { data, error } = await supabase
       .from('users')
       .insert({ username, password: hash })
@@ -60,21 +101,20 @@ app.post('/api/register', async (req, res) => {
     res.json({ token, username: data.username, chips: data.chips, wins: data.wins, losses: data.losses });
   } catch (err) {
     console.error('Register error:', err.message);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
-app.post('/api/auth/google', async (req, res) => {
+app.post('/api/auth/google', authLimiter, async (req, res) => {
   const { access_token } = req.body || {};
   if (!access_token) return res.status(400).json({ error: 'Missing token' });
 
   try {
-    // Verify the Supabase access token and get the Google user
     const { data: { user: googleUser }, error } = await supabase.auth.getUser(access_token);
     if (error || !googleUser) {
       console.error('getUser failed:', error?.message, error?.status);
-      return res.status(401).json({ error: `Invalid Google token: ${error?.message || 'no user'}` });
+      return res.status(401).json({ error: 'Google authentication failed' });
     }
 
     const authId = googleUser.id;
@@ -84,7 +124,6 @@ app.post('/api/auth/google', async (req, res) => {
       || email.split('@')[0]
       || 'player';
 
-    // Check if this Google account already has a user row
     const { data: existing } = await supabase
       .from('users')
       .select('id, username, chips, wins, losses')
@@ -92,12 +131,11 @@ app.post('/api/auth/google', async (req, res) => {
       .single();
 
     if (existing) {
-      // Returning Google user — just issue our JWT
       const token = jwt.sign({ id: existing.id, username: existing.username }, JWT_SECRET, { expiresIn: '7d' });
       return res.json({ token, username: existing.username, chips: existing.chips, wins: existing.wins, losses: existing.losses });
     }
 
-    // New Google user — generate a unique username (min 3 chars required)
+    // New Google user — generate a unique username
     let username = displayName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 18);
     if (username.length < 3) username = ('player' + username).slice(0, 18);
     const { data: taken } = await supabase.from('users').select('username').eq('username', username).single();
@@ -114,14 +152,18 @@ app.post('/api/auth/google', async (req, res) => {
     const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, username: newUser.username, chips: newUser.chips, wins: newUser.wins, losses: newUser.losses });
   } catch (err) {
-    console.error('Google auth error:', err.message, err.details || '');
-    res.status(500).json({ error: err.message || 'Server error' });
+    console.error('Google auth error:', err.message);
+    res.status(500).json({ error: 'Authentication failed' });
   }
 });
 
 // ── Login ─────────────────────────────────────────────────────────────────────
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', authLimiter, async (req, res) => {
   const { username, password } = req.body || {};
+  // Validate inputs before hitting the DB
+  if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Invalid credentials' });
+  }
   try {
     const { data: user, error } = await supabase
       .from('users')
@@ -129,19 +171,21 @@ app.post('/api/login', async (req, res) => {
       .eq('username', username)
       .single();
 
-    if (error || !user) return res.status(400).json({ error: 'Invalid credentials' });
+    // Timing-safe: always compare even when user not found (prevents timing attacks)
+    const hash = user?.password || '$2a$12$invalidhashpaddingtomakeitconstanttime';
+    const valid = user && await bcrypt.compare(password, hash);
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+    if (error || !user || !valid) {
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
 
-    // Update last_seen
     await supabase.from('users').update({ last_seen: new Date().toISOString() }).eq('id', user.id);
 
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, username: user.username, chips: user.chips, wins: user.wins, losses: user.losses });
   } catch (err) {
     console.error('Login error:', err.message);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 
@@ -163,18 +207,29 @@ app.get('/api/profile', auth, async (req, res) => {
 });
 
 // ── Update stats + log hand history ──────────────────────────────────────────
-app.post('/api/stats', auth, async (req, res) => {
+const MAX_CHIPS_SWING = 20000; // sanity cap: no single hand can move more than this
+
+app.post('/api/stats', auth, statsLimiter, async (req, res) => {
   const { won, chipsChange = 0, handData } = req.body || {};
+
+  // Validate inputs
+  if (typeof won !== 'boolean') {
+    return res.status(400).json({ error: 'Invalid payload' });
+  }
+  const delta = Number(chipsChange);
+  if (!Number.isFinite(delta) || Math.abs(delta) > MAX_CHIPS_SWING) {
+    return res.status(400).json({ error: 'Invalid chips value' });
+  }
+
   try {
-    // Fetch current chips first (Supabase doesn't support arithmetic updates directly)
     const { data: current } = await supabase
       .from('users')
       .select('chips, wins, losses')
       .eq('id', req.user.id)
       .single();
 
-    const newChips = Math.max(500, (current.chips || 5000) + chipsChange);
-    const newWins  = (current.wins  || 0) + (won ? 1 : 0);
+    const newChips  = Math.max(500, (current.chips || 5000) + delta);
+    const newWins   = (current.wins   || 0) + (won ? 1 : 0);
     const newLosses = (current.losses || 0) + (won ? 0 : 1);
 
     const { data, error } = await supabase
@@ -186,17 +241,22 @@ app.post('/api/stats', auth, async (req, res) => {
 
     if (error) throw error;
 
-    // Log hand history if provided
-    if (handData) {
+    if (handData && typeof handData === 'object') {
+      const playerHand = String(handData.playerHand || '').slice(0, 100);
+      const aiHand     = String(handData.aiHand     || '').slice(0, 100);
+      const potSize    = Number(handData.potSize) || 0;
+      const community  = Array.isArray(handData.community)  ? handData.community.slice(0, 5)  : [];
+      const playerCards= Array.isArray(handData.playerCards) ? handData.playerCards.slice(0, 2) : [];
+
       await supabase.from('hand_history').insert({
         user_id:         req.user.id,
         result:          won ? 'win' : 'loss',
-        player_hand:     handData.playerHand || '',
-        ai_hand:         handData.aiHand     || '',
-        chips_change:    chipsChange,
-        pot_size:        handData.potSize    || 0,
-        community_cards: handData.community  || [],
-        player_cards:    handData.playerCards || [],
+        player_hand:     playerHand,
+        ai_hand:         aiHand,
+        chips_change:    delta,
+        pot_size:        potSize,
+        community_cards: community,
+        player_cards:    playerCards,
       });
     }
 
@@ -220,6 +280,13 @@ app.get('/api/leaderboard', async (req, res) => {
     console.error('Leaderboard error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+// ── Global error handler ──────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Server error' });
 });
 
 app.listen(PORT, () => console.log(`CR Poker server → http://localhost:${PORT}`));
