@@ -463,6 +463,18 @@ body {
 }
 .pcard-lg .pcard-suit-center { font-size: 28px; }
 
+/* Player hole cards lift on hover (desktop only) */
+.table-cards-bottom .pcard {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  cursor: default;
+}
+@media (hover: hover) {
+  .table-cards-bottom .pcard:hover {
+    transform: translateY(-10px);
+    box-shadow: 2px 10px 22px rgba(0,0,0,0.55);
+  }
+}
+
 /* ── Player Seats ────────────────────────────────────────────────────────── */
 .seat {
   display: flex;
