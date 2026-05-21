@@ -9,7 +9,8 @@ const SMALL_BLIND = 10;
 const BIG_BLIND = 20;
 const START_CHIPS = 5000;
 const NUM_SEATS = 9;
-const BOT_NAMES = ['Alex', 'Blake', 'Casey', 'Dana', 'Ellis', 'Finley', 'Gray', 'Hunter'];
+// First names of legendary poker players
+const BOT_NAMES = ['Doyle', 'Phil', 'Daniel', 'Stu', 'Johnny', 'Chris', 'Gus', 'Tom'];
 
 function makeBot(name) {
   return { name, chips: START_CHIPS, hand: [], bet: 0, folded: false };
