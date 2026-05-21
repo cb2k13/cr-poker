@@ -396,6 +396,28 @@ body {
   text-shadow: 0 1px 8px rgba(0,0,0,0.6);
 }
 
+/* Chip tray above community cards */
+.chip-tray {
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  justify-content: center;
+}
+.chip-stack {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+}
+.chip-disc {
+  width: 26px;
+  height: 6px;
+  border-radius: 50%;
+  border: 2px solid;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.55);
+  margin-top: -3px;
+  flex-shrink: 0;
+}
+
 /* Community cards row */
 .community-row {
   display: flex;

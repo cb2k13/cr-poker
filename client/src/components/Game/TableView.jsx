@@ -1,5 +1,48 @@
 import PlayingCard from './PlayingCard';
 
+const CHIP_DENOMS = [
+  { value: 1000, color: '#FFD700', border: '#A8860B' },
+  { value: 500,  color: '#9B59B6', border: '#6C3483' },
+  { value: 100,  color: '#2C3E50', border: '#1A252F' },
+  { value: 25,   color: '#27AE60', border: '#1A7A42' },
+  { value: 10,   color: '#2980B9', border: '#1A5276' },
+  { value: 5,    color: '#E74C3C', border: '#A93226' },
+  { value: 1,    color: '#ECF0F1', border: '#95A5A6' },
+];
+
+function decomposeChips(amount) {
+  const stacks = [];
+  let rem = amount;
+  for (const d of CHIP_DENOMS) {
+    const n = Math.floor(rem / d.value);
+    if (n > 0) {
+      stacks.push({ ...d, count: Math.min(n, 7) });
+      rem -= n * d.value;
+    }
+    if (stacks.length >= 5) break;
+  }
+  return stacks;
+}
+
+function ChipTray({ amount }) {
+  const stacks = decomposeChips(amount);
+  return (
+    <div className="chip-tray">
+      {stacks.map((stack, i) => (
+        <div key={i} className="chip-stack">
+          {Array.from({ length: stack.count }).map((_, j) => (
+            <div
+              key={j}
+              className="chip-disc"
+              style={{ background: stack.color, borderColor: stack.border }}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // 9 seats: player at bottom, 8 bots going left (SB left of dealer, BB left of SB)
 const SEAT_POSITIONS = [
   { left: '50%',  top: '92%'  }, // 0: Player  — bottom center
@@ -72,6 +115,7 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
         <div className="felt-watermark">CR POKER</div>
 
         <div className="table-middle">
+          {pot > 0 && <ChipTray amount={pot} />}
           <div className="community-row">
             {community.map((card, i) => (
               <PlayingCard key={i} card={card} faceDown={false} />
