@@ -1,7 +1,7 @@
 import { isRed, getRankName, getSuitSymbol } from '../../utils/poker';
 
-export default function PlayingCard({ card, faceDown = false, large = false }) {
-  const cls = `pcard${large ? ' pcard-lg' : ''}`;
+export default function PlayingCard({ card, faceDown = false, large = false, tiny = false }) {
+  const cls = `pcard${large ? ' pcard-lg' : ''}${tiny ? ' pcard-tiny' : ''}`;
 
   if (faceDown || !card) {
     return <div className={`${cls} pcard-back`}><div className="pcard-back-inner" /></div>;

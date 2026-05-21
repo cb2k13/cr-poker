@@ -1,54 +1,71 @@
 import PlayingCard from './PlayingCard';
 
-export default function TableView({ gameState, username, isPlayerTurn }) {
-  const {
-    playerHand, aiHand, community, showAICards,
-    pot, aiChips, playerChips, aiBet, playerBet,
-    aiThinking, playerIsDealer, phase,
-  } = gameState;
+// Clockwise from bottom: player (0), then bots 0-6 (seats 1-7)
+const SEAT_POSITIONS = [
+  { left: '50%',  top: '91%'  }, // 0: Player — bottom center
+  { left: '82%',  top: '80%'  }, // 1: Bot 0  — bottom right
+  { left: '96%',  top: '50%'  }, // 2: Bot 1  — right
+  { left: '82%',  top: '20%'  }, // 3: Bot 2  — top right
+  { left: '62%',  top: '5%'   }, // 4: Bot 3  — top right-center
+  { left: '38%',  top: '5%'   }, // 5: Bot 4  — top left-center
+  { left: '18%',  top: '20%'  }, // 6: Bot 5  — top left
+  { left: '4%',   top: '50%'  }, // 7: Bot 6  — left
+];
 
-  const aiIsActive = !isPlayerTurn && aiThinking && !['idle','showdown','gameover'].includes(phase);
-  const playerIsActive = isPlayerTurn && !['idle','showdown','gameover'].includes(phase);
+function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat }) {
+  const isActive = activeIdx === seat;
+  const eliminated = bot.chips <= 0 && bot.folded;
 
   return (
-    <div className="table-scene">
-
-      {/* ── AI Seat ── */}
-      <div className={`seat seat-ai${aiIsActive ? ' seat-active-ai' : ''}`}>
-        <div className="seat-avatar">🤖</div>
-        <div className="seat-info">
-          <div className="seat-name">
-            DEALER BOT
-            {!playerIsDealer && <span className="dealer-btn-chip">D</span>}
-          </div>
-          <div className="seat-chips">{aiChips.toLocaleString()}</div>
-          {aiBet > 0 && <div className="seat-bet">Bet: <strong>{aiBet}</strong></div>}
-          {aiThinking && (
-            <div className="seat-thinking">
-              thinking<span className="ai-thinking"><span /><span /><span /></span>
-            </div>
-          )}
+    <div
+      className={`seat-outer${isActive ? ' seat-outer-active' : ''}${eliminated ? ' seat-outer-eliminated' : ''}`}
+      style={{ left: SEAT_POSITIONS[seat].left, top: SEAT_POSITIONS[seat].top }}
+    >
+      {/* Bot hole cards above/beside the seat chip */}
+      {bot.hand.length > 0 && !bot.folded && (
+        <div className="bot-cards">
+          {bot.hand.map((card, i) => (
+            <PlayingCard key={i} card={card} faceDown={!showCards} tiny />
+          ))}
         </div>
+      )}
+      <div className={`seat-chip${bot.folded ? ' seat-chip-folded' : ''}${isActive ? ' seat-chip-active-ai' : ''}`}>
+        <div className="seat-chip-name">
+          {bot.name}
+          {dealerSeat === seat && <span className="dealer-btn-chip">D</span>}
+          {sbSeat === seat && <span className="blind-chip sb-chip">S</span>}
+          {bbSeat === seat && <span className="blind-chip bb-chip">B</span>}
+        </div>
+        <div className="seat-chip-stack">{bot.chips.toLocaleString()}</div>
+        {bot.bet > 0 && !bot.folded && <div className="seat-chip-bet">{bot.bet}</div>}
+        {bot.folded && <div className="seat-chip-folded-label">FOLDED</div>}
+        {isActive && !bot.folded && (
+          <div className="seat-thinking-dot"><span /><span /><span /></div>
+        )}
       </div>
+    </div>
+  );
+}
 
-      {/* ── Oval Table ── */}
+export default function TableView({ gameState, username, isPlayerTurn }) {
+  const {
+    playerHand, bots = [], community, showCards,
+    pot, playerChips, playerBet, playerFolded,
+    activeIdx, dealerSeat, sbSeat, bbSeat, phase,
+  } = gameState;
+
+  const playerIsActive = isPlayerTurn && !['idle', 'showdown', 'gameover'].includes(phase);
+
+  return (
+    <div className="table-wrap">
+      {/* ── Oval felt ── */}
       <div className="oval-table">
         <div className="felt-watermark">CR POKER</div>
 
-        {/* AI hole cards */}
-        <div className="table-cards table-cards-top">
-          {aiHand.length > 0
-            ? aiHand.map((card, i) => (
-                <PlayingCard key={i} card={card} faceDown={!showAICards} />
-              ))
-            : <div className="cards-empty-hint" />}
-        </div>
-
-        {/* Pot + community */}
         <div className="table-middle">
           {pot > 0 && (
             <div className="table-pot">
-              <span className="table-pot-label">Total Pot:</span>
+              <span className="table-pot-label">Pot:</span>
               <span className="table-pot-amount">{pot.toLocaleString()}</span>
             </div>
           )}
@@ -62,7 +79,7 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           </div>
         </div>
 
-        {/* Player hole cards */}
+        {/* Player hole cards on the felt */}
         <div className="table-cards table-cards-bottom">
           {playerHand.map((card, i) => (
             <PlayingCard key={i} card={card} faceDown={false} large />
@@ -70,18 +87,37 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
         </div>
       </div>
 
-      {/* ── Player Seat ── */}
-      <div className={`seat seat-player${playerIsActive ? ' seat-active-player' : ''}`}>
-        <div className="seat-avatar">🧑</div>
-        <div className="seat-info">
-          <div className="seat-name">
+      {/* ── Player seat (bottom center) ── */}
+      <div
+        className={`seat-outer${playerIsActive ? ' seat-outer-active' : ''}${playerFolded ? ' seat-outer-eliminated' : ''}`}
+        style={{ left: SEAT_POSITIONS[0].left, top: SEAT_POSITIONS[0].top }}
+      >
+        <div className={`seat-chip${playerFolded ? ' seat-chip-folded' : ''}${playerIsActive ? ' seat-chip-active-player' : ''}`}>
+          <div className="seat-chip-name">
             {username || 'You'}
-            {playerIsDealer && <span className="dealer-btn-chip">D</span>}
+            {dealerSeat === 0 && <span className="dealer-btn-chip">D</span>}
+            {sbSeat === 0 && <span className="blind-chip sb-chip">S</span>}
+            {bbSeat === 0 && <span className="blind-chip bb-chip">B</span>}
           </div>
-          <div className="seat-chips">{playerChips.toLocaleString()}</div>
-          {playerBet > 0 && <div className="seat-bet">Bet: <strong>{playerBet}</strong></div>}
+          <div className="seat-chip-stack">{playerChips.toLocaleString()}</div>
+          {playerBet > 0 && !playerFolded && <div className="seat-chip-bet">{playerBet}</div>}
+          {playerFolded && <div className="seat-chip-folded-label">FOLDED</div>}
         </div>
       </div>
+
+      {/* ── Bot seats ── */}
+      {bots.map((bot, i) => (
+        <BotSeat
+          key={i}
+          bot={bot}
+          seat={i + 1}
+          activeIdx={activeIdx}
+          showCards={showCards}
+          dealerSeat={dealerSeat}
+          sbSeat={sbSeat}
+          bbSeat={bbSeat}
+        />
+      ))}
     </div>
   );
 }

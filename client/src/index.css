@@ -285,25 +285,26 @@ body {
 }
 
 /* ── Table Scene ─────────────────────────────────────────────────────────── */
-.table-scene {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px 16px;
-  height: 100%;
-  width: 100%;
+/* ── 8-Seat Table Wrap ───────────────────────────────────────────────────── */
+.table-wrap {
+  position: relative;
+  width: min(900px, 96vw);
+  height: min(520px, 56vw);
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 /* ── Oval Table ──────────────────────────────────────────────────────────── */
 .oval-table {
-  position: relative;
-  width: min(720px, calc(100vw - 32px));
-  height: min(360px, calc((100vw - 32px) * 0.5));
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 58%;
+  height: 66%;
   background: radial-gradient(ellipse at 50% 35%, #3db868 0%, #25a050 45%, #1a7a38 100%);
   border-radius: 50%;
-  border: 14px solid #4a1e06;
+  border: 12px solid #4a1e06;
   box-shadow:
     inset 0 0 60px rgba(0,0,0,0.35),
     0 0 0 4px #7a3a10,
@@ -313,9 +314,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 80px 18px;
+  padding: 14px 50px 10px;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 /* Inner rail ring */
@@ -493,83 +493,119 @@ body {
   }
 }
 
-/* ── Player Seats ────────────────────────────────────────────────────────── */
-.seat {
+/* ── Seat outer (positioned absolutely around the oval) ──────────────────── */
+.seat-outer {
+  position: absolute;
+  transform: translate(-50%, -50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 3px;
+  z-index: 2;
+}
+.seat-outer-active .seat-chip { border-color: rgba(255,180,0,0.7); box-shadow: 0 0 12px rgba(255,180,0,0.3); }
+.seat-outer-active .seat-chip-active-player { border-color: #69f0ae; box-shadow: 0 0 12px rgba(105,240,174,0.35); }
+.seat-outer-eliminated { opacity: 0.38; pointer-events: none; }
+
+/* Seat info chip */
+.seat-chip {
   background: linear-gradient(135deg, #1c2e4a, #0f1f36);
-  border: 2px solid rgba(255,255,255,0.12);
-  border-radius: 12px;
-  padding: 8px 14px;
-  min-width: 160px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.5);
-  transition: border-color 0.3s, box-shadow 0.3s;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 5px 9px;
+  min-width: 76px;
+  text-align: center;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.55);
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
+.seat-chip-folded { opacity: 0.45; }
 
-.seat-active-player {
-  border-color: #69f0ae;
-  box-shadow: 0 0 0 1px #69f0ae, 0 0 20px rgba(105,240,174,0.25);
-}
-.seat-active-ai {
-  border-color: rgba(255,180,0,0.6);
-  box-shadow: 0 0 0 1px rgba(255,180,0,0.4), 0 0 16px rgba(255,180,0,0.15);
-}
-
-.seat-avatar { font-size: 26px; flex-shrink: 0; }
-
-.seat-info { display: flex; flex-direction: column; gap: 2px; }
-
-.seat-name {
+.seat-chip-name {
   font-family: 'Cinzel', serif;
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 700;
-  color: rgba(255,255,255,0.9);
+  color: rgba(255,255,255,0.85);
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
 }
-
-.seat-chips {
-  font-size: 20px;
+.seat-chip-stack {
+  font-size: 13px;
   font-weight: 700;
   color: var(--gold);
   font-family: 'Inter', sans-serif;
 }
-
-.seat-bet {
-  font-size: 11px;
-  color: rgba(255,255,255,0.55);
+.seat-chip-bet {
+  font-size: 9px;
+  color: #ffd54f;
 }
-.seat-bet strong { color: #ffd54f; }
-
-.seat-thinking {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
+.seat-chip-folded-label {
+  font-size: 8px;
+  color: rgba(255,80,80,0.7);
+  letter-spacing: 0.5px;
+}
+.seat-thinking-dot {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  gap: 3px;
+  justify-content: center;
+  margin-top: 2px;
+}
+.seat-thinking-dot span {
+  width: 4px; height: 4px;
+  background: rgba(255,180,0,0.7);
+  border-radius: 50%;
+  animation: blink 1.2s infinite;
+}
+.seat-thinking-dot span:nth-child(2) { animation-delay: 0.2s; }
+.seat-thinking-dot span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Bot hole cards above their seat chip */
+.bot-cards {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
 }
 
+/* Tiny cards for bots */
+.pcard-tiny {
+  width: 22px !important;
+  height: 32px !important;
+  border-radius: 3px !important;
+}
+.pcard-tiny .pcard-corner { display: none; }
+.pcard-tiny .pcard-suit-center { font-size: 11px; }
+
+/* Dealer / blind chips */
 .dealer-btn-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 17px;
-  height: 17px;
+  width: 14px;
+  height: 14px;
   background: #e8d000;
   color: #111;
   border-radius: 50%;
-  font-size: 9px;
+  font-size: 7px;
   font-weight: 900;
   font-family: 'Arial', sans-serif;
   flex-shrink: 0;
 }
-
-.cards-empty-hint {
-  width: 80px;
-  height: 50px;
+.blind-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  font-size: 7px;
+  font-weight: 900;
+  font-family: 'Arial', sans-serif;
+  flex-shrink: 0;
 }
+.sb-chip { background: #4fc3f7; color: #003; }
+.bb-chip { background: #ef5350; color: #fff; }
 
 /* ── Old canvas placeholder (keep for compilation) ───────────────────────── */
 .game-canvas {
@@ -983,16 +1019,15 @@ body {
 /* ── Mobile responsive ───────────────────────────────────────────────────── */
 @media (max-width: 600px) {
 
-  /* ── New table ── */
-  .table-scene { gap: 6px; padding: 6px 8px; }
+  /* ── Table wrap ── */
+  .table-wrap { height: min(480px, 90vw); }
 
   .oval-table {
-    padding: 10px 30px 10px;
+    padding: 10px 30px 8px;
     border-width: 8px;
   }
 
   .card-placeholder { width: 28px; height: 40px; }
-
   .community-row { gap: 3px; }
 
   .pcard { width: 28px; height: 40px; }
@@ -1004,10 +1039,9 @@ body {
   .pcard-suit-center { font-size: 13px; }
   .pcard-lg .pcard-suit-center { font-size: 17px; }
 
-  .seat { padding: 6px 10px; min-width: unset; gap: 7px; border-radius: 8px; }
-  .seat-avatar { font-size: 20px; }
-  .seat-name { font-size: 10px; }
-  .seat-chips { font-size: 15px; }
+  .seat-chip { min-width: 58px; padding: 4px 6px; }
+  .seat-chip-name { font-size: 7px; }
+  .seat-chip-stack { font-size: 10px; }
 
   .table-pot-amount { font-size: 12px; }
   .table-cards { gap: 4px; }

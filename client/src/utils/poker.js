@@ -66,13 +66,21 @@ function evaluateHand5(cards) {
   return { rank: 0, tb: ranks, name: 'High Card' };
 }
 
-function cmpHands(a, b) {
+export function cmpHands(a, b) {
   if (a.rank !== b.rank) return a.rank - b.rank;
   for (let i = 0; i < Math.max(a.tb.length, b.tb.length); i++) {
     const d = (a.tb[i] || 0) - (b.tb[i] || 0);
     if (d !== 0) return d;
   }
   return 0;
+}
+
+// players: [{seat, hand}], returns [{seat, hand, eval}] for all tied winners
+export function getWinners(players, community) {
+  const evaluated = players.map(p => ({ ...p, eval: bestHand([...p.hand, ...community]) }));
+  let best = evaluated[0].eval;
+  for (const e of evaluated) if (cmpHands(e.eval, best) > 0) best = e.eval;
+  return evaluated.filter(e => cmpHands(e.eval, best) === 0);
 }
 
 export function bestHand(cards) {
@@ -83,12 +91,6 @@ export function bestHand(cards) {
   }, evaluateHand5(combinations(cards, 5)[0]));
 }
 
-export function compareHands(ph, ah, community) {
-  const pb = bestHand([...ph, ...community]);
-  const ab = bestHand([...ah, ...community]);
-  const r = cmpHands(pb, ab);
-  return { result: r > 0 ? 'player' : r < 0 ? 'ai' : 'tie', playerHand: pb, aiHand: ab };
-}
 
 // AI strategy
 function preFlopStrength([c1, c2]) {
