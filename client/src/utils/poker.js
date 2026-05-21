@@ -75,12 +75,12 @@ export function cmpHands(a, b) {
   return 0;
 }
 
-// players: [{seat, hand}], returns [{seat, hand, eval}] for all tied winners
+// Returns { winners, allEvaluated } — winners are the tied-best hands
 export function getWinners(players, community) {
-  const evaluated = players.map(p => ({ ...p, eval: bestHand([...p.hand, ...community]) }));
-  let best = evaluated[0].eval;
-  for (const e of evaluated) if (cmpHands(e.eval, best) > 0) best = e.eval;
-  return evaluated.filter(e => cmpHands(e.eval, best) === 0);
+  const allEvaluated = players.map(p => ({ ...p, eval: bestHand([...p.hand, ...community]) }));
+  let best = allEvaluated[0].eval;
+  for (const e of allEvaluated) if (cmpHands(e.eval, best) > 0) best = e.eval;
+  return { winners: allEvaluated.filter(e => cmpHands(e.eval, best) === 0), allEvaluated };
 }
 
 export function bestHand(cards) {

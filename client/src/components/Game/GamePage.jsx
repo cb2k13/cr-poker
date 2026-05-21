@@ -74,7 +74,7 @@ function doShowdown(state) {
   state.bots.forEach((b, i) => { if (!b.folded) contestants.push({ seat: i + 1, hand: b.hand }); });
   if (contestants.length === 1) return awardPotToSole(state);
 
-  const winners = getWinners(contestants, state.community);
+  const { winners, allEvaluated } = getWinners(contestants, state.community);
   const share = Math.floor(state.pot / winners.length);
   const remainder = state.pot - share * winners.length;
   const newBots = state.bots.map(b => ({ ...b }));
@@ -100,7 +100,7 @@ function doShowdown(state) {
     showCards: true, message: msg,
     handResult: {
       winners: winners.map(w => ({ seat: w.seat, handName: w.eval.name })),
-      allHands: evaluated.map(e => ({ seat: e.seat, handName: e.eval.name })),
+      allHands: allEvaluated.map(e => ({ seat: e.seat, handName: e.eval.name })),
     },
     handEnded: { won: playerWon, tied: playerTied, chipsChange: newPlayerChips - state.handStartChips },
   };
