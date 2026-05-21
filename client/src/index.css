@@ -313,7 +313,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 14px 50px 10px;
   overflow: hidden;
 }
@@ -352,6 +352,13 @@ body {
   align-items: center;
   position: relative;
   z-index: 1;
+}
+
+.table-cards-bottom {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .table-middle {
