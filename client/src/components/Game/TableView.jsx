@@ -16,7 +16,7 @@ function decomposeChips(amount) {
   for (const d of CHIP_DENOMS) {
     const n = Math.floor(rem / d.value);
     if (n > 0) {
-      stacks.push({ ...d, count: Math.min(n, 7) });
+      stacks.push({ ...d, count: Math.min(n, 12) });
       rem -= n * d.value;
     }
     if (stacks.length >= 5) break;
