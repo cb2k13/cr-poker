@@ -29,11 +29,6 @@ function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, 
           {bot.hand.map((card, i) => (
             <PlayingCard key={i} card={card} faceDown={!showCards} tiny />
           ))}
-          {handInfo && (
-            <div className={`hand-label${isWinner ? ' hand-label-winner' : ''}`}>
-              {handInfo.handName}
-            </div>
-          )}
         </div>
       )}
       <div className={`seat-chip${bot.folded ? ' seat-chip-folded' : ''}${isActive ? ' seat-chip-active-ai' : ''}${isWinner ? ' seat-chip-winner' : ''}`}>
@@ -45,6 +40,11 @@ function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, 
         </div>
         <div className="seat-chip-stack">{bot.chips.toLocaleString()}</div>
         {bot.bet > 0 && !bot.folded && <div className="seat-chip-bet">{bot.bet}</div>}
+        {handInfo && (
+          <div className={`seat-chip-hand${isWinner ? ' seat-chip-hand-winner' : ''}`}>
+            {handInfo.handName}
+          </div>
+        )}
         {bot.folded && <div className="seat-chip-folded-label">FOLDED</div>}
         {isActive && !bot.folded && (
           <div className="seat-thinking-dot"><span /><span /><span /></div>
@@ -88,16 +88,10 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           )}
         </div>
 
-        {/* Player hole cards + hand label */}
         <div className="table-cards table-cards-bottom">
           {playerHand.map((card, i) => (
             <PlayingCard key={i} card={card} faceDown={false} large />
           ))}
-          {playerHandInfo && (
-            <div className={`hand-label hand-label-player${playerIsWinner ? ' hand-label-winner' : ''}`}>
-              {playerHandInfo.handName}
-            </div>
-          )}
         </div>
       </div>
 
@@ -115,6 +109,11 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           </div>
           <div className="seat-chip-stack">{playerChips.toLocaleString()}</div>
           {playerBet > 0 && !playerFolded && <div className="seat-chip-bet">{playerBet}</div>}
+          {playerHandInfo && (
+            <div className={`seat-chip-hand${playerIsWinner ? ' seat-chip-hand-winner' : ''}`}>
+              {playerHandInfo.handName}
+            </div>
+          )}
           {playerFolded && <div className="seat-chip-folded-label">FOLDED</div>}
         </div>
       </div>

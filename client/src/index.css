@@ -518,29 +518,17 @@ body {
 }
 .seat-chip-winner { border-color: #ffd700 !important; }
 
-/* Hand name label shown on revealed cards */
-.hand-label {
-  position: absolute;
-  bottom: -18px;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
+/* Hand name shown inside the seat chip at showdown */
+.seat-chip-hand {
   font-size: 8px;
   font-family: 'Cinzel', serif;
-  color: rgba(255,255,255,0.7);
-  background: rgba(0,0,0,0.55);
-  border-radius: 4px;
-  padding: 1px 5px;
-  pointer-events: none;
+  color: rgba(255,255,255,0.65);
+  white-space: nowrap;
+  margin-top: 1px;
 }
-.hand-label-winner {
+.seat-chip-hand-winner {
   color: #ffd700;
-  background: rgba(0,0,0,0.75);
   font-weight: 700;
-}
-.hand-label-player {
-  bottom: -20px;
-  font-size: 10px;
 }
 
 /* Seat info chip */
@@ -599,11 +587,9 @@ body {
 
 /* Bot hole cards above their seat chip */
 .bot-cards {
-  position: relative;
   display: flex;
   gap: 2px;
   justify-content: center;
-  padding-bottom: 20px;
 }
 
 /* Tiny cards for bots */
