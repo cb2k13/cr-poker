@@ -365,22 +365,28 @@ body {
 
 /* Pot */
 .table-pot {
-  text-align: center;
-  font-family: 'Cinzel', serif;
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+  background: rgba(0,0,0,0.28);
+  border-radius: 20px;
+  padding: 3px 14px;
 }
 .table-pot-label {
-  color: rgba(255,255,255,0.55);
-  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-right: 5px;
+  letter-spacing: 1.5px;
 }
 .table-pot-amount {
   color: #fff;
+  font-family: 'Cinzel', serif;
   font-weight: 700;
-  font-size: 15px;
-  text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+  font-size: 14px;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.6);
 }
 
 /* Community cards row */

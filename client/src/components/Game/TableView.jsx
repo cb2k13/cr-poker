@@ -63,12 +63,6 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
         <div className="felt-watermark">CR POKER</div>
 
         <div className="table-middle">
-          {pot > 0 && (
-            <div className="table-pot">
-              <span className="table-pot-label">Pot:</span>
-              <span className="table-pot-amount">{pot.toLocaleString()}</span>
-            </div>
-          )}
           <div className="community-row">
             {community.map((card, i) => (
               <PlayingCard key={i} card={card} faceDown={false} />
@@ -77,6 +71,12 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
               <div key={i} className="card-placeholder" />
             ))}
           </div>
+          {pot > 0 && (
+            <div className="table-pot">
+              <span className="table-pot-label">POT</span>
+              <span className="table-pot-amount">{pot.toLocaleString()}</span>
+            </div>
+          )}
         </div>
 
         {/* Player hole cards on the felt */}
