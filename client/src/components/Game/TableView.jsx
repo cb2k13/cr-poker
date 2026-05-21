@@ -1,15 +1,16 @@
 import PlayingCard from './PlayingCard';
 
-// Seats go left from the player (standard poker: SB left of dealer, BB left of SB)
+// 9 seats: player at bottom, 8 bots going left (SB left of dealer, BB left of SB)
 const SEAT_POSITIONS = [
-  { left: '50%',  top: '91%'  }, // 0: Player — bottom center
-  { left: '18%',  top: '80%'  }, // 1: Bot 0  — bottom left  (SB when player is dealer)
-  { left: '4%',   top: '50%'  }, // 2: Bot 1  — left          (BB when player is dealer)
-  { left: '18%',  top: '18%'  }, // 3: Bot 2  — top left
-  { left: '38%',  top: '5%'   }, // 4: Bot 3  — top left-center
-  { left: '62%',  top: '5%'   }, // 5: Bot 4  — top right-center
-  { left: '82%',  top: '18%'  }, // 6: Bot 5  — top right
-  { left: '96%',  top: '50%'  }, // 7: Bot 6  — right
+  { left: '50%',  top: '92%'  }, // 0: Player  — bottom center
+  { left: '22%',  top: '82%'  }, // 1: Bot 0   — bottom left   (SB when player is dealer)
+  { left: '4%',   top: '56%'  }, // 2: Bot 1   — left          (BB when player is dealer)
+  { left: '10%',  top: '22%'  }, // 3: Bot 2   — top left
+  { left: '34%',  top: '5%'   }, // 4: Bot 3   — top left-center
+  { left: '66%',  top: '5%'   }, // 5: Bot 4   — top right-center
+  { left: '90%',  top: '22%'  }, // 6: Bot 5   — top right
+  { left: '96%',  top: '56%'  }, // 7: Bot 6   — right
+  { left: '78%',  top: '82%'  }, // 8: Bot 7   — bottom right
 ];
 
 function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat }) {

@@ -8,8 +8,8 @@ import { createDeck, getWinners, getAIAction } from '../../utils/poker';
 const SMALL_BLIND = 10;
 const BIG_BLIND = 20;
 const START_CHIPS = 5000;
-const NUM_SEATS = 8;
-const BOT_NAMES = ['Alex', 'Blake', 'Casey', 'Dana', 'Ellis', 'Finley', 'Gray'];
+const NUM_SEATS = 9;
+const BOT_NAMES = ['Alex', 'Blake', 'Casey', 'Dana', 'Ellis', 'Finley', 'Gray', 'Hunter'];
 
 function makeBot(name) {
   return { name, chips: START_CHIPS, hand: [], bet: 0, folded: false };
@@ -120,14 +120,25 @@ function advanceStreet(state) {
     playerBet: 0, bots: newBots, currentBet: 0,
     actedSeats: Array(NUM_SEATS).fill(false),
     activeIdx: first, playerTurn: first === 0,
-    showCards: false, message: '',
+    showCards: state.showCards, message: '',
   };
+}
+
+function isAllInRunout(state) {
+  for (let i = 0; i < NUM_SEATS; i++) {
+    if (!isFolded(state, i) && getSeatChips(state, i) > 0) return false;
+  }
+  return true;
 }
 
 function afterAction(state) {
   if (activeSeatCount(state) <= 1) return awardPotToSole(state);
   const next = nextToAct(state);
-  if (next === -1) return advanceStreet(state);
+  if (next === -1) {
+    // Betting round complete — show all cards if everyone is all-in
+    const base = isAllInRunout(state) ? { ...state, showCards: true } : state;
+    return advanceStreet(base);
+  }
   return { ...state, activeIdx: next, playerTurn: next === 0 };
 }
 
@@ -220,16 +231,30 @@ export default function GamePage() {
     });
   }, []);
 
+  // ── All-in runout: auto-advance streets when nobody has chips to bet ─────────
+  const runoutTimerRef = useRef(null);
+  useEffect(() => {
+    if (gs.activeIdx !== -1) return;
+    if (['idle', 'showdown', 'gameover'].includes(gs.phase)) return;
+    runoutTimerRef.current = setTimeout(() => {
+      setGs(prev => {
+        if (prev.activeIdx !== -1 || ['idle', 'showdown', 'gameover'].includes(prev.phase)) return prev;
+        return advanceStreet(prev);
+      });
+    }, 1100);
+    return () => clearTimeout(runoutTimerRef.current);
+  }, [gs.activeIdx, gs.phase]);
+
   // ── Bot AI turns ─────────────────────────────────────────────────────────────
   const aiTimerRef = useRef(null);
   useEffect(() => {
-    if (gs.playerTurn || gs.activeIdx === 0) return;
+    if (gs.activeIdx <= 0) return;  // 0 = player, -1 = all-in runout
     if (['idle', 'showdown', 'gameover'].includes(gs.phase)) return;
 
     if (aiTimerRef.current) clearTimeout(aiTimerRef.current);
     aiTimerRef.current = setTimeout(() => {
       setGs(prev => {
-        if (prev.playerTurn || prev.activeIdx === 0) return prev;
+        if (prev.activeIdx <= 0) return prev;
         const seat = prev.activeIdx;
         const botIdx = seat - 1;
         const bot = prev.bots[botIdx];
