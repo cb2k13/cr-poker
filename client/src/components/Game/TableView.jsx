@@ -13,24 +13,30 @@ const SEAT_POSITIONS = [
   { left: '78%',  top: '82%'  }, // 8: Bot 7   — bottom right
 ];
 
-function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat }) {
+function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, handResult }) {
   const isActive = activeIdx === seat;
   const eliminated = bot.chips <= 0 && bot.folded;
+  const isWinner = handResult?.winners?.some(w => w.seat === seat);
+  const handInfo = showCards && handResult?.allHands?.find(h => h.seat === seat);
 
   return (
     <div
-      className={`seat-outer${isActive ? ' seat-outer-active' : ''}${eliminated ? ' seat-outer-eliminated' : ''}`}
+      className={`seat-outer${isActive ? ' seat-outer-active' : ''}${eliminated ? ' seat-outer-eliminated' : ''}${isWinner ? ' seat-outer-winner' : ''}`}
       style={{ left: SEAT_POSITIONS[seat].left, top: SEAT_POSITIONS[seat].top }}
     >
-      {/* Bot hole cards above/beside the seat chip */}
       {bot.hand.length > 0 && !bot.folded && (
         <div className="bot-cards">
           {bot.hand.map((card, i) => (
             <PlayingCard key={i} card={card} faceDown={!showCards} tiny />
           ))}
+          {handInfo && (
+            <div className={`hand-label${isWinner ? ' hand-label-winner' : ''}`}>
+              {handInfo.handName}
+            </div>
+          )}
         </div>
       )}
-      <div className={`seat-chip${bot.folded ? ' seat-chip-folded' : ''}${isActive ? ' seat-chip-active-ai' : ''}`}>
+      <div className={`seat-chip${bot.folded ? ' seat-chip-folded' : ''}${isActive ? ' seat-chip-active-ai' : ''}${isWinner ? ' seat-chip-winner' : ''}`}>
         <div className="seat-chip-name">
           {bot.name}
           {dealerSeat === seat && <span className="dealer-btn-chip">D</span>}
@@ -52,10 +58,12 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
   const {
     playerHand, bots = [], community, showCards,
     pot, playerChips, playerBet, playerFolded,
-    activeIdx, dealerSeat, sbSeat, bbSeat, phase,
+    activeIdx, dealerSeat, sbSeat, bbSeat, phase, handResult,
   } = gameState;
 
   const playerIsActive = isPlayerTurn && !['idle', 'showdown', 'gameover'].includes(phase);
+  const playerIsWinner = handResult?.winners?.some(w => w.seat === 0);
+  const playerHandInfo = showCards && handResult?.allHands?.find(h => h.seat === 0);
 
   return (
     <div className="table-wrap">
@@ -80,20 +88,25 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           )}
         </div>
 
-        {/* Player hole cards on the felt */}
+        {/* Player hole cards + hand label */}
         <div className="table-cards table-cards-bottom">
           {playerHand.map((card, i) => (
             <PlayingCard key={i} card={card} faceDown={false} large />
           ))}
+          {playerHandInfo && (
+            <div className={`hand-label hand-label-player${playerIsWinner ? ' hand-label-winner' : ''}`}>
+              {playerHandInfo.handName}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Player seat (bottom center) ── */}
       <div
-        className={`seat-outer${playerIsActive ? ' seat-outer-active' : ''}${playerFolded ? ' seat-outer-eliminated' : ''}`}
+        className={`seat-outer${playerIsActive ? ' seat-outer-active' : ''}${playerFolded ? ' seat-outer-eliminated' : ''}${playerIsWinner ? ' seat-outer-winner' : ''}`}
         style={{ left: SEAT_POSITIONS[0].left, top: SEAT_POSITIONS[0].top }}
       >
-        <div className={`seat-chip${playerFolded ? ' seat-chip-folded' : ''}${playerIsActive ? ' seat-chip-active-player' : ''}`}>
+        <div className={`seat-chip${playerFolded ? ' seat-chip-folded' : ''}${playerIsActive ? ' seat-chip-active-player' : ''}${playerIsWinner ? ' seat-chip-winner' : ''}`}>
           <div className="seat-chip-name">
             {username || 'You'}
             {dealerSeat === 0 && <span className="dealer-btn-chip">D</span>}
@@ -117,6 +130,7 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           dealerSeat={dealerSeat}
           sbSeat={sbSeat}
           bbSeat={bbSeat}
+          handResult={handResult}
         />
       ))}
     </div>

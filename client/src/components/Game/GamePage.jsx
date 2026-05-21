@@ -98,7 +98,10 @@ function doShowdown(state) {
     playerChips: newPlayerChips, bots: newBots, pot: 0,
     phase: gameover ? 'gameover' : 'showdown',
     showCards: true, message: msg,
-    handResult: { winners: winners.map(w => ({ seat: w.seat, handName: w.eval.name })) },
+    handResult: {
+      winners: winners.map(w => ({ seat: w.seat, handName: w.eval.name })),
+      allHands: evaluated.map(e => ({ seat: e.seat, handName: e.eval.name })),
+    },
     handEnded: { won: playerWon, tied: playerTied, chipsChange: newPlayerChips - state.handStartChips },
   };
 }

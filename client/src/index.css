@@ -512,6 +512,36 @@ body {
 .seat-outer-active .seat-chip { border-color: rgba(255,180,0,0.7); box-shadow: 0 0 12px rgba(255,180,0,0.3); }
 .seat-outer-active .seat-chip-active-player { border-color: #69f0ae; box-shadow: 0 0 12px rgba(105,240,174,0.35); }
 .seat-outer-eliminated { opacity: 0.38; pointer-events: none; }
+.seat-outer-winner .seat-chip {
+  border-color: #ffd700;
+  box-shadow: 0 0 0 2px #ffd700, 0 0 18px rgba(255,215,0,0.55);
+}
+.seat-chip-winner { border-color: #ffd700 !important; }
+
+/* Hand name label shown on revealed cards */
+.hand-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 8px;
+  font-family: 'Cinzel', serif;
+  color: rgba(255,255,255,0.7);
+  background: rgba(0,0,0,0.55);
+  border-radius: 4px;
+  padding: 1px 5px;
+  pointer-events: none;
+}
+.hand-label-winner {
+  color: #ffd700;
+  background: rgba(0,0,0,0.75);
+  font-weight: 700;
+}
+.hand-label-player {
+  bottom: -20px;
+  font-size: 10px;
+}
 
 /* Seat info chip */
 .seat-chip {
@@ -569,9 +599,11 @@ body {
 
 /* Bot hole cards above their seat chip */
 .bot-cards {
+  position: relative;
   display: flex;
   gap: 2px;
   justify-content: center;
+  padding-bottom: 20px;
 }
 
 /* Tiny cards for bots */
