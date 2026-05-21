@@ -114,29 +114,57 @@ function advanceStreet(state) {
 
   const newBots = state.bots.map(b => ({ ...b, bet: 0 }));
   const interim = { ...state, bots: newBots, playerBet: 0, currentBet: 0 };
-  const first = nextSeatFrom(dealerSeat, s => !isFolded(interim, s) && getSeatChips(interim, s) > 0);
+  // Skip betting entirely if cards are already revealed (all-in runout)
+  const runout = state.showCards || shouldRevealCards(interim);
+  const first = runout ? -1 : nextSeatFrom(dealerSeat, s => !isFolded(interim, s) && getSeatChips(interim, s) > 0);
   return {
     ...state, phase: nextPhase, deck: newDeck, community: newCommunity,
     playerBet: 0, bots: newBots, currentBet: 0,
     actedSeats: Array(NUM_SEATS).fill(false),
     activeIdx: first, playerTurn: first === 0,
-    showCards: state.showCards, message: '',
+    showCards: runout, message: '',
   };
 }
 
-function isAllInRunout(state) {
-  for (let i = 0; i < NUM_SEATS; i++) {
-    if (!isFolded(state, i) && getSeatChips(state, i) > 0) return false;
+// Return chips that no opponent could match (uncalled portion of an over-bet)
+function returnUncalledBets(state) {
+  const active = [];
+  if (!state.playerFolded) active.push({ seat: 0, bet: state.playerBet });
+  state.bots.forEach((b, i) => { if (!b.folded) active.push({ seat: i + 1, bet: b.bet }); });
+  if (active.length <= 1) return state;
+
+  let newPlayerChips = state.playerChips;
+  let newPot = state.pot;
+  const newBots = state.bots.map(b => ({ ...b }));
+
+  for (const p of active) {
+    const maxOtherBet = Math.max(...active.filter(q => q.seat !== p.seat).map(q => q.bet));
+    const excess = Math.max(0, p.bet - maxOtherBet);
+    if (excess > 0) {
+      if (p.seat === 0) newPlayerChips += excess;
+      else newBots[p.seat - 1].chips += excess;
+      newPot -= excess;
+    }
   }
-  return true;
+  return { ...state, playerChips: newPlayerChips, bots: newBots, pot: newPot };
+}
+
+// Cards flip face-up when ≤1 player still has chips to bet with
+function shouldRevealCards(state) {
+  let withChips = 0;
+  for (let i = 0; i < NUM_SEATS; i++) {
+    if (!isFolded(state, i) && getSeatChips(state, i) > 0) withChips++;
+  }
+  return withChips <= 1;
 }
 
 function afterAction(state) {
   if (activeSeatCount(state) <= 1) return awardPotToSole(state);
   const next = nextToAct(state);
   if (next === -1) {
-    // Betting round complete — show all cards if everyone is all-in
-    const base = isAllInRunout(state) ? { ...state, showCards: true } : state;
+    // Betting round complete — return any uncalled chips, then check for runout
+    const settled = returnUncalledBets(state);
+    const base = shouldRevealCards(settled) ? { ...settled, showCards: true } : settled;
     return advanceStreet(base);
   }
   return { ...state, activeIdx: next, playerTurn: next === 0 };
