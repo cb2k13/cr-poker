@@ -32,7 +32,7 @@ function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, 
       {bot.hand.length > 0 && !bot.folded && (
         <div className="bot-cards">
           {bot.hand.map((card, i) => (
-            <PlayingCard key={i} card={card} faceDown={!showCards} tiny />
+            <PlayingCard key={i} card={card} faceDown={!showCards} tiny={!showCards} />
           ))}
         </div>
       )}
