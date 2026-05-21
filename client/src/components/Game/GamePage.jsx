@@ -242,7 +242,7 @@ export default function GamePage() {
   const processedHandRef = useRef(null);
   useEffect(() => { refreshUserRef.current = refreshUser; }, [refreshUser]);
   useEffect(() => {
-    if (!gs.handEnded || !user || gs.handEnded === processedHandRef.current) return;
+    if (!gs.handEnded || !user || user.isGuest || gs.handEnded === processedHandRef.current) return;
     processedHandRef.current = gs.handEnded;
     const { won, tied, chipsChange } = gs.handEnded;
     if (tied) return;

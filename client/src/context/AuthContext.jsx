@@ -85,6 +85,11 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }
 
+  function signInAsGuest() {
+    setUser({ username: 'Guest', chips: 5000, wins: 0, losses: 0, isGuest: true });
+    setLoading(false);
+  }
+
   async function signOut() {
     localStorage.removeItem('token');
     setUser(null);
@@ -96,7 +101,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signInAsGuest, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,7 +5,7 @@ import { supabase } from '../../utils/supabase';
 import SuitsBackground from './SuitsBackground';
 
 export default function AuthPage() {
-  const { signIn } = useAuth();
+  const { signIn, signInAsGuest } = useAuth();
   const [tab, setTab] = useState('login');
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState(window.__googleAuthError || '');
@@ -112,6 +112,16 @@ export default function AuthPage() {
             {loading ? 'Loading…' : tab === 'login' ? 'ENTER THE TABLE' : 'CREATE ACCOUNT'}
           </button>
         </form>
+
+        <div className="auth-divider"><span>or</span></div>
+
+        <button
+          className="guest-btn"
+          onClick={signInAsGuest}
+          disabled={loading || googleLoading}
+        >
+          Play as Guest
+        </button>
 
         <div style={{ marginTop: 24, padding: '16px', background: 'rgba(212,175,55,0.08)', borderRadius: 10, border: '1px solid rgba(212,175,55,0.2)' }}>
           <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: 8 }}>HOW TO PLAY</div>
