@@ -24,6 +24,11 @@ function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, 
       className={`seat-outer${isActive ? ' seat-outer-active' : ''}${eliminated ? ' seat-outer-eliminated' : ''}${isWinner ? ' seat-outer-winner' : ''}`}
       style={{ left: SEAT_POSITIONS[seat].left, top: SEAT_POSITIONS[seat].top }}
     >
+      {handInfo && (
+        <div className={`hand-badge${isWinner ? ' hand-badge-winner' : ''}`}>
+          {handInfo.handName}
+        </div>
+      )}
       {bot.hand.length > 0 && !bot.folded && (
         <div className="bot-cards">
           {bot.hand.map((card, i) => (
@@ -40,11 +45,6 @@ function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, 
         </div>
         <div className="seat-chip-stack">{bot.chips.toLocaleString()}</div>
         {bot.bet > 0 && !bot.folded && <div className="seat-chip-bet">{bot.bet}</div>}
-        {handInfo && (
-          <div className={`seat-chip-hand${isWinner ? ' seat-chip-hand-winner' : ''}`}>
-            {handInfo.handName}
-          </div>
-        )}
         {bot.folded && <div className="seat-chip-folded-label">FOLDED</div>}
         {isActive && !bot.folded && (
           <div className="seat-thinking-dot"><span /><span /><span /></div>
@@ -100,6 +100,11 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
         className={`seat-outer${playerIsActive ? ' seat-outer-active' : ''}${playerFolded ? ' seat-outer-eliminated' : ''}${playerIsWinner ? ' seat-outer-winner' : ''}`}
         style={{ left: SEAT_POSITIONS[0].left, top: SEAT_POSITIONS[0].top }}
       >
+        {playerHandInfo && (
+          <div className={`hand-badge${playerIsWinner ? ' hand-badge-winner' : ''}`}>
+            {playerHandInfo.handName}
+          </div>
+        )}
         <div className={`seat-chip${playerFolded ? ' seat-chip-folded' : ''}${playerIsActive ? ' seat-chip-active-player' : ''}${playerIsWinner ? ' seat-chip-winner' : ''}`}>
           <div className="seat-chip-name">
             {username || 'You'}
@@ -109,11 +114,6 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           </div>
           <div className="seat-chip-stack">{playerChips.toLocaleString()}</div>
           {playerBet > 0 && !playerFolded && <div className="seat-chip-bet">{playerBet}</div>}
-          {playerHandInfo && (
-            <div className={`seat-chip-hand${playerIsWinner ? ' seat-chip-hand-winner' : ''}`}>
-              {playerHandInfo.handName}
-            </div>
-          )}
           {playerFolded && <div className="seat-chip-folded-label">FOLDED</div>}
         </div>
       </div>

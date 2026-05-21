@@ -525,17 +525,25 @@ body {
 }
 .seat-chip-winner { border-color: #ffd700 !important; }
 
-/* Hand name shown inside the seat chip at showdown */
-.seat-chip-hand {
-  font-size: 8px;
+/* Hand name badge shown above cards at showdown */
+.hand-badge {
+  font-size: 10px;
   font-family: 'Cinzel', serif;
-  color: rgba(255,255,255,0.65);
-  white-space: nowrap;
-  margin-top: 1px;
-}
-.seat-chip-hand-winner {
-  color: #ffd700;
   font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  background: rgba(0,0,0,0.65);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  text-align: center;
+}
+.hand-badge-winner {
+  color: #1a1a1a;
+  background: #ffd700;
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255,215,0,0.6);
+  font-size: 11px;
 }
 
 /* Seat info chip */
