@@ -5,6 +5,7 @@ import TableView from './TableView';
 import GameControls from './GameControls';
 import { createDeck, getWinners, getAIAction } from '../../utils/poker';
 
+// starting blinds for players and other starters 
 const SMALL_BLIND = 10;
 const BIG_BLIND = 20;
 const START_CHIPS = 5000;

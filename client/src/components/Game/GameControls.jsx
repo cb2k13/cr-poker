@@ -78,7 +78,7 @@ export default function GameControls({ gameState, onAction, disabled }) {
         </button>
       )}
 
-      {/* Raise */}
+      {/* Raise bet */}
       {canRaise && (
         <div className="raise-row">
           <div className="raise-input-group">
