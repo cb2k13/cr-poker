@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { updateStats } from '../../utils/api';
 import TableView from './TableView';
 import GameControls from './GameControls';
-import { createDeck, getWinners, getAIAction } from '../../utils/poker';
+import { createDeck, getWinners, getAIAction, BOT_PERSONALITIES } from '../../utils/poker';
 import { useSounds } from '../../utils/useSounds';
 import RulesModal from '../Rules/RulesModal';
 
@@ -16,7 +16,7 @@ const NUM_SEATS = 9;
 const BOT_NAMES = ['Doyle', 'Phil', 'Daniel', 'Stu', 'Johnny', 'Chris', 'Gus', 'Tom'];
 
 function makeBot(name) {
-  return { name, chips: START_CHIPS, hand: [], bet: 0, folded: false };
+  return { name, chips: START_CHIPS, hand: [], bet: 0, folded: false, personality: BOT_PERSONALITIES[name] ?? {} };
 }
 
 // ── Seat helpers ───────────────────────────────────────────────────────────────
@@ -207,7 +207,7 @@ export default function GamePage() {
       let bots = prev.bots.map(b => ({
         name: b.name,
         chips: reset ? START_CHIPS : b.chips,
-        hand: [], bet: 0, folded: false,
+        hand: [], bet: 0, folded: false, personality: b.personality,
       }));
 
       // Rotate dealer to next seat with chips
@@ -333,7 +333,7 @@ export default function GamePage() {
         if (!bot || bot.folded || bot.chips <= 0) return afterAction(prev);
 
         const { action, amount } = getAIAction(
-          bot.hand, prev.community, prev.pot, prev.currentBet, bot.bet, bot.chips, prev.bigBlind
+          bot.hand, prev.community, prev.pot, prev.currentBet, bot.bet, bot.chips, prev.bigBlind, bot.personality
         );
 
         const newBots = prev.bots.map(b => ({ ...b }));

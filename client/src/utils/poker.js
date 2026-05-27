@@ -92,6 +92,18 @@ export function bestHand(cards) {
 }
 
 
+// Bot personality profiles — keyed by name, matched in GamePage
+export const BOT_PERSONALITIES = {
+  Doyle:  { aggression: 0.75, bluffRate: 0.18, tightness: -0.05 }, // LAG legend
+  Phil:   { aggression: 0.72, bluffRate: 0.12, tightness:  0.08 }, // TAG elite
+  Daniel: { aggression: 0.65, bluffRate: 0.20, tightness: -0.08 }, // LAG reads
+  Stu:    { aggression: 0.90, bluffRate: 0.28, tightness: -0.15 }, // maniac
+  Johnny: { aggression: 0.60, bluffRate: 0.08, tightness:  0.10 }, // tight passive
+  Chris:  { aggression: 0.55, bluffRate: 0.07, tightness:  0.12 }, // mathematical nit
+  Gus:    { aggression: 0.95, bluffRate: 0.32, tightness: -0.20 }, // extreme LAG
+  Tom:    { aggression: 0.85, bluffRate: 0.25, tightness: -0.12 }, // super aggressive
+};
+
 // AI strategy
 function preFlopStrength([c1, c2]) {
   const [hi, lo] = [c1, c2].sort((a, b) => b.rank - a.rank);
@@ -107,32 +119,47 @@ function postFlopStrength(hand, community) {
   return Math.min(h.rank / 8 + (h.tb[0] || 0) / 112, 1);
 }
 
-export function getAIAction(aiHand, community, pot, currentBet, aiBet, aiChips, bigBlind) {
+export function getAIAction(aiHand, community, pot, currentBet, aiBet, aiChips, bigBlind, personality = {}) {
+  const {
+    aggression = 0.70,
+    bluffRate  = 0.11,
+    tightness  = 0,
+  } = personality;
+
   const toCall = Math.min(currentBet - aiBet, aiChips);
   const strength = community.length === 0
     ? preFlopStrength(aiHand)
     : postFlopStrength(aiHand, community);
 
-  const bluff = Math.random() < 0.11;
-  const eff = bluff ? Math.min(strength + 0.35, 1) : strength;
+  const bluff = Math.random() < bluffRate;
+  const bluffBoost = bluff ? 0.20 + Math.random() * 0.20 : 0;
+  const eff = Math.min(strength + bluffBoost, 1);
+
+  const raiseThreshold  = 0.52 + tightness;
+  const strongThreshold = 0.75 + tightness * 0.5;
 
   if (toCall <= 0) {
-    if (eff > 0.52 || bluff) {
-      const bet = Math.min(Math.max(Math.floor(pot * (0.5 + eff * 0.8)), bigBlind), aiChips);
+    if (eff > raiseThreshold) {
+      const betFraction = 0.3 + aggression * 0.9;
+      const bet = Math.min(Math.max(Math.floor(pot * betFraction), bigBlind), aiChips);
       return { action: 'raise', amount: bet };
     }
     return { action: 'check' };
   }
 
   const potOdds = toCall / (pot + toCall);
-  if (eff > 0.75) {
-    if (Math.random() > 0.45 && aiChips > currentBet * 2) {
-      const raise = Math.min(currentBet * 2 + Math.floor(pot * 0.5), aiChips);
+  if (eff > strongThreshold) {
+    const reRaiseChance = 0.20 + aggression * 0.55;
+    if (Math.random() < reRaiseChance && aiChips > currentBet * 2) {
+      const raise = Math.min(
+        Math.floor(currentBet * (1.5 + aggression * 0.5) + pot * 0.3 * aggression),
+        aiChips,
+      );
       return { action: 'raise', amount: raise };
     }
     return { action: 'call' };
   }
-  if (eff > potOdds - 0.05) return { action: 'call' };
+  if (eff > potOdds - 0.05 + tightness * 0.3) return { action: 'call' };
   return { action: 'fold' };
 }
 
