@@ -1201,6 +1201,80 @@ body {
   .btn-play-again { width: 100%; padding: 13px 24px; font-size: 14px; }
 }
 
+/* ── Flying Chip Animations ──────────────────────────────────────────────── */
+
+/*
+  Chips start at the seat (the element is positioned there via left/top),
+  then translate to the pot using --dx/--dy. A pop at 30% gives the arc feel.
+*/
+@keyframes chipFlyToPot {
+  0% {
+    transform: translate(0, 0) scale(1.15);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(calc(var(--dx) * 0.28), calc(var(--dy) * 0.28)) scale(1.25);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.45);
+    opacity: 0;
+  }
+}
+
+/* Reverse for pot → winner: starts small at pot, grows, arrives at seat */
+@keyframes chipFlyToWinner {
+  0% {
+    transform: translate(0, 0) scale(0.45);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  65% {
+    transform: translate(calc(var(--dx) * 0.65), calc(var(--dy) * 0.65)) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx), var(--dy)) scale(0.7);
+    opacity: 0;
+  }
+}
+
+.chip-fly {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid;
+  /* margin offsets center the disc on the anchor point */
+  margin-left: -11px;
+  margin-top: -11px;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  z-index: 60;
+  animation: chipFlyToPot 0.50s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  /* Stripe pattern to make chips look like real clay chips */
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.18) 0px,
+    rgba(255, 255, 255, 0.18) 3px,
+    transparent 3px,
+    transparent 8px
+  );
+  background-size: 100% 100%;
+}
+
+.chip-fly-win {
+  animation: chipFlyToWinner 0.58s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
 /* ── Rules Modal ─────────────────────────────────────────────────────────── */
 .rules-overlay {
   position: fixed;

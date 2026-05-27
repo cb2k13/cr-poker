@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import PlayingCard from './PlayingCard';
+import ChipAnimationLayer from './ChipAnimationLayer';
 import { bestHand } from '../../utils/poker';
 
 const HAND_COLORS = {
@@ -111,7 +113,8 @@ function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, 
   );
 }
 
-export default function TableView({ gameState, username, isPlayerTurn }) {
+export default function TableView({ gameState, username, isPlayerTurn, chipEvents = [], onChipEventDone }) {
+  const tableRef = useRef(null);
   const {
     playerHand, bots = [], community, showCards,
     pot, playerChips, playerBet, playerFolded,
@@ -133,7 +136,7 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
   }
 
   return (
-    <div className="table-wrap">
+    <div className="table-wrap" ref={tableRef}>
       {/* ── Oval felt ── */}
       <div className="oval-table">
         <div className="felt-watermark">CR POKER</div>
@@ -215,6 +218,13 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           handNumber={handNumber}
         />
       ))}
+
+      {/* ── Flying chip animations ── */}
+      <ChipAnimationLayer
+        events={chipEvents}
+        onEventDone={onChipEventDone}
+        containerRef={tableRef}
+      />
     </div>
   );
 }
