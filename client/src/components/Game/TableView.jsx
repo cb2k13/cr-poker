@@ -1,4 +1,18 @@
 import PlayingCard from './PlayingCard';
+import { bestHand } from '../../utils/poker';
+
+const HAND_COLORS = {
+  'High Card':      '#9e9e9e',
+  'One Pair':       '#e0e0e0',
+  'Two Pair':       '#64b5f6',
+  'Three of a Kind':'#42a5f5',
+  'Straight':       '#66bb6a',
+  'Flush':          '#26c6da',
+  'Full House':     '#ffa726',
+  'Four of a Kind': '#ffd54f',
+  'Straight Flush': '#ce93d8',
+  'Royal Flush':    '#f06292',
+};
 
 const CHIP_DENOMS = [
   { value: 1000, color: '#FFD700', border: '#A8860B' },
@@ -56,7 +70,7 @@ const SEAT_POSITIONS = [
   { left: '78%',  top: '82%'  }, // 8: Bot 7   — bottom right
 ];
 
-function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, handResult }) {
+function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, handResult, handNumber }) {
   const isActive = activeIdx === seat;
   const eliminated = bot.chips <= 0 && bot.folded;
   const isWinner = handResult?.winners?.some(w => w.seat === seat);
@@ -75,7 +89,7 @@ function BotSeat({ bot, seat, activeIdx, showCards, dealerSeat, sbSeat, bbSeat, 
       {bot.hand.length > 0 && !bot.folded && (
         <div className="bot-cards">
           {bot.hand.map((card, i) => (
-            <PlayingCard key={i} card={card} faceDown={!showCards} tiny={!showCards} />
+            <PlayingCard key={`${handNumber}-${i}`} card={card} faceDown={!showCards} tiny={!showCards} dealDelay={i * 110} />
           ))}
         </div>
       )}
@@ -101,12 +115,22 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
   const {
     playerHand, bots = [], community, showCards,
     pot, playerChips, playerBet, playerFolded,
-    activeIdx, dealerSeat, sbSeat, bbSeat, phase, handResult,
+    activeIdx, dealerSeat, sbSeat, bbSeat, phase, handResult, handNumber,
   } = gameState;
 
   const playerIsActive = isPlayerTurn && !['idle', 'showdown', 'gameover'].includes(phase);
   const playerIsWinner = handResult?.winners?.some(w => w.seat === 0);
   const playerHandInfo = showCards && handResult?.allHands?.find(h => h.seat === 0);
+
+  // Live hand strength: show from flop onward, or "Pocket Pair" preflop
+  let liveHandName = null;
+  if (!playerFolded && playerHand.length === 2 && !['idle', 'showdown', 'gameover'].includes(phase)) {
+    if (community.length >= 3) {
+      liveHandName = bestHand([...playerHand, ...community]).name;
+    } else if (playerHand[0].rank === playerHand[1].rank) {
+      liveHandName = 'Pocket Pair';
+    }
+  }
 
   return (
     <div className="table-wrap">
@@ -118,7 +142,12 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           {pot > 0 && <ChipTray amount={pot} />}
           <div className="community-row">
             {community.map((card, i) => (
-              <PlayingCard key={i} card={card} faceDown={false} />
+              <PlayingCard
+                key={i}
+                card={card}
+                faceDown={false}
+                dealDelay={phase === 'flop' ? i * 110 : 0}
+              />
             ))}
             {Array.from({ length: Math.max(0, 5 - community.length) }).map((_, i) => (
               <div key={i} className="card-placeholder" />
@@ -134,7 +163,7 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
 
         <div className="table-cards table-cards-bottom">
           {playerHand.map((card, i) => (
-            <PlayingCard key={i} card={card} faceDown={false} large />
+            <PlayingCard key={`${handNumber}-${i}`} card={card} faceDown={false} large dealDelay={i * 130} />
           ))}
         </div>
       </div>
@@ -160,6 +189,15 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           {playerBet > 0 && !playerFolded && <div className="seat-chip-bet">{playerBet}</div>}
           {playerFolded && <div className="seat-chip-folded-label">FOLDED</div>}
         </div>
+        {liveHandName && (
+          <div
+            key={liveHandName}
+            className="hand-strength-label"
+            style={{ color: HAND_COLORS[liveHandName] ?? '#e0e0e0' }}
+          >
+            {liveHandName}
+          </div>
+        )}
       </div>
 
       {/* ── Bot seats ── */}
@@ -174,6 +212,7 @@ export default function TableView({ gameState, username, isPlayerTurn }) {
           sbSeat={sbSeat}
           bbSeat={bbSeat}
           handResult={handResult}
+          handNumber={handNumber}
         />
       ))}
     </div>
