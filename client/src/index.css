@@ -361,6 +361,25 @@ body {
   transform: translateX(-50%);
 }
 
+.hand-strength-label {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 2px 10px;
+  white-space: nowrap;
+  animation: handStrengthPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes handStrengthPop {
+  from { opacity: 0; transform: scale(0.75) translateY(4px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
 .table-middle {
   display: flex;
   flex-direction: column;
@@ -436,6 +455,17 @@ body {
 }
 
 /* ── Playing Cards ───────────────────────────────────────────────────────── */
+@keyframes dealCard {
+  from {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.72) rotate(-7deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
 .pcard {
   position: relative;
   width: 46px;
@@ -444,6 +474,7 @@ body {
   box-shadow: 1px 2px 8px rgba(0,0,0,0.5);
   flex-shrink: 0;
   user-select: none;
+  animation: dealCard 0.22s ease-out both;
 }
 .pcard-lg {
   width: 58px;

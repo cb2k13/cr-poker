@@ -4,6 +4,7 @@ import { updateStats } from '../../utils/api';
 import TableView from './TableView';
 import GameControls from './GameControls';
 import { createDeck, getWinners, getAIAction } from '../../utils/poker';
+import { useSounds } from '../../utils/useSounds';
 
 // starting blinds for players and other starters 
 const SMALL_BLIND = 10;
@@ -264,6 +265,42 @@ export default function GamePage() {
     });
   }, []);
 
+  // ── Sound effects ────────────────────────────────────────────────────────────
+  const { playDeal, playChip, playWin, playFold } = useSounds();
+  const prevHandNumberRef = useRef(0);
+  const prevPhaseRef = useRef('idle');
+  const prevPotRef = useRef(0);
+
+  useEffect(() => {
+    if (gs.handNumber > prevHandNumberRef.current) {
+      playDeal();
+      setTimeout(playDeal, 140);
+      prevHandNumberRef.current = gs.handNumber;
+    }
+  }, [gs.handNumber, playDeal]);
+
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = gs.phase;
+    if (prev === gs.phase) return;
+    if (gs.phase === 'flop') {
+      playDeal();
+      setTimeout(playDeal, 130);
+      setTimeout(playDeal, 260);
+    } else if (gs.phase === 'turn' || gs.phase === 'river') {
+      playDeal();
+    }
+  }, [gs.phase, playDeal]);
+
+  useEffect(() => {
+    if (gs.pot > prevPotRef.current) playChip();
+    prevPotRef.current = gs.pot;
+  }, [gs.pot, playChip]);
+
+  useEffect(() => {
+    if (gs.handEnded?.won) playWin();
+  }, [gs.handEnded, playWin]);
+
   // ── All-in runout: auto-advance streets when nobody has chips to bet ─────────
   const runoutTimerRef = useRef(null);
   useEffect(() => {
@@ -335,6 +372,8 @@ export default function GamePage() {
   // ── Player actions ───────────────────────────────────────────────────────────
   const handleAction = useCallback((action, amount) => {
     if (action === 'newhand') { dealNewHand(); return; }
+    if (action === 'fold') playFold();
+    else if (action === 'call' || action === 'raise') playChip();
     setGs(prev => {
       if (!prev.playerTurn) return prev;
       const acted = [...prev.actedSeats];
@@ -375,7 +414,7 @@ export default function GamePage() {
       }
       return prev;
     });
-  }, [dealNewHand]);
+  }, [dealNewHand, playFold, playChip]);
 
   // ── Stats persistence ────────────────────────────────────────────────────────
   const refreshUserRef = useRef(refreshUser);
