@@ -5,6 +5,7 @@ import TableView from './TableView';
 import GameControls from './GameControls';
 import { createDeck, getWinners, getAIAction } from '../../utils/poker';
 import { useSounds } from '../../utils/useSounds';
+import RulesModal from '../Rules/RulesModal';
 
 // starting blinds for players and other starters 
 const SMALL_BLIND = 10;
@@ -197,6 +198,7 @@ function initState(playerChips = START_CHIPS) {
 export default function GamePage() {
   const { user, signOut, refreshUser } = useAuth();
   const [gs, setGs] = useState(() => initState(user?.chips || START_CHIPS));
+  const [showRules, setShowRules] = useState(false);
 
   const dealNewHand = useCallback(() => {
     setGs(prev => {
@@ -440,6 +442,7 @@ export default function GamePage() {
           <span className="navbar-logo">♠ CR POKER</span>
           <span className="navbar-stat">Hand <strong>#{gs.handNumber}</strong></span>
           <span className="navbar-stat">W: <strong>{user?.wins ?? 0}</strong> | L: <strong>{user?.losses ?? 0}</strong></span>
+          <button className="btn-rules" onClick={() => setShowRules(true)}>Rules</button>
         </div>
         <div className="game-nav-right">
           <span className="phase-pill">{phaseLabel}</span>
@@ -473,6 +476,7 @@ export default function GamePage() {
       </main>
 
       <GameControls gameState={gs} onAction={handleAction} disabled={!isPlayerTurn} />
+      {showRules && <RulesModal onClose={() => setShowRules(false)} />}
     </div>
   );
 }
