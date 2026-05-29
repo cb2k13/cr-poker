@@ -202,50 +202,23 @@ export default function GamePage() {
   const [chipEvents, setChipEvents] = useState([]);
 
   // ── Chip animation event emission ────────────────────────────────────────────
-  // betAnimRef tracks previous bet values so we can detect increments
-  const betAnimRef = useRef({ handNumber: -1, player: 0, bots: new Array(8).fill(0), pot: 0, handResult: null });
-  const botBetsKey = gs.bots.map(b => b.bet).join(',');
+  // Only animates pot → winner at showdown
+  const prevPotRef2 = useRef(0);
 
   useEffect(() => {
-    const prev = betAnimRef.current;
-    const events = [];
-    let eid = Date.now();
-
-    if (gs.handNumber !== prev.handNumber) {
-      // New hand: emit blind-posting chips
-      if (gs.playerBet > 0) events.push({ id: `${eid++}`, fromSeat: 0, toSeat: null, amount: gs.playerBet });
-      gs.bots.forEach((b, i) => {
-        if (b.bet > 0) events.push({ id: `${eid++}`, fromSeat: i + 1, toSeat: null, amount: b.bet, delay: (i + 1) * 80 });
-      });
-    } else {
-      // Ongoing hand: detect increased bets
-      if (gs.playerBet > prev.player) {
-        events.push({ id: `${eid++}`, fromSeat: 0, toSeat: null, amount: gs.playerBet - prev.player });
-      }
-      gs.bots.forEach((b, i) => {
-        if (b.bet > (prev.bots[i] ?? 0)) {
-          events.push({ id: `${eid++}`, fromSeat: i + 1, toSeat: null, amount: b.bet - prev.bots[i] });
-        }
-      });
-      // Pot awarded at showdown: fly chips from pot to each winner
-      if (prev.pot > 0 && gs.pot === 0 && gs.handResult?.winners?.length) {
-        gs.handResult.winners.forEach((w, idx) => {
-          events.push({ id: `win-${eid++}`, fromSeat: null, toSeat: w.seat, amount: Math.floor(prev.pot / gs.handResult.winners.length), delay: idx * 120 });
-        });
-      }
+    if (prevPotRef2.current > 0 && gs.pot === 0 && gs.handResult?.winners?.length) {
+      const pot = prevPotRef2.current;
+      const events = gs.handResult.winners.map((w, idx) => ({
+        id: `win-${Date.now()}-${idx}`,
+        fromSeat: null,
+        toSeat: w.seat,
+        amount: Math.floor(pot / gs.handResult.winners.length),
+        delay: idx * 120,
+      }));
+      setChipEvents(e => [...e, ...events]);
     }
-
-    betAnimRef.current = {
-      handNumber: gs.handNumber,
-      player: gs.playerBet,
-      bots: gs.bots.map(b => b.bet),
-      pot: gs.pot,
-      handResult: gs.handResult,
-    };
-
-    if (events.length > 0) setChipEvents(e => [...e, ...events]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gs.handNumber, gs.pot, gs.playerBet, gs.handResult, botBetsKey]);
+    prevPotRef2.current = gs.pot;
+  }, [gs.pot, gs.handResult]);
 
   const handleChipEventDone = useCallback((id) => {
     setChipEvents(e => e.filter(ev => ev.id !== id));
