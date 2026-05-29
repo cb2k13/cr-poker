@@ -1111,32 +1111,42 @@ body {
 /* ── Mobile responsive ───────────────────────────────────────────────────── */
 @media (max-width: 600px) {
 
+  /* Pad the bottom so the action buttons don't sit on top of the table */
+  .game-main { padding-bottom: 118px; }
+
   /* ── Table wrap ── */
-  .table-wrap { height: min(480px, 90vw); }
+  .table-wrap { height: min(420px, 80vw); }
 
   .oval-table {
-    padding: 10px 30px 8px;
-    border-width: 8px;
+    padding: 8px 22px 6px;
+    border-width: 7px;
   }
 
-  .card-placeholder { width: 28px; height: 40px; }
-  .community-row { gap: 3px; }
+  .card-placeholder { width: 24px; height: 34px; }
+  .community-row { gap: 2px; }
 
-  .pcard { width: 28px; height: 40px; }
-  .pcard-lg { width: 36px; height: 50px; }
-  .pcard-rank { font-size: 8px; }
-  .pcard-lg .pcard-rank { font-size: 10px; }
-  .pcard-suit-sm { font-size: 6px; }
-  .pcard-lg .pcard-suit-sm { font-size: 7px; }
-  .pcard-suit-center { font-size: 13px; }
-  .pcard-lg .pcard-suit-center { font-size: 17px; }
+  .pcard { width: 24px; height: 34px; }
+  .pcard-lg { width: 32px; height: 44px; }
+  .pcard-rank { font-size: 7px; }
+  .pcard-lg .pcard-rank { font-size: 9px; }
+  .pcard-suit-sm { font-size: 5px; }
+  .pcard-lg .pcard-suit-sm { font-size: 6px; }
+  .pcard-suit-center { font-size: 11px; }
+  .pcard-lg .pcard-suit-center { font-size: 15px; }
 
-  .seat-chip { min-width: 58px; padding: 4px 6px; }
-  .seat-chip-name { font-size: 7px; }
-  .seat-chip-stack { font-size: 10px; }
+  /* Even tinier bot cards so they don't crowd seat chips */
+  .pcard-tiny { width: 18px !important; height: 26px !important; }
+  .pcard-tiny .pcard-suit-center { font-size: 9px; }
 
-  .table-pot-amount { font-size: 12px; }
-  .table-cards { gap: 4px; }
+  .seat-chip { min-width: 50px; padding: 3px 5px; }
+  .seat-chip-name { font-size: 6.5px; }
+  .seat-chip-stack { font-size: 9px; }
+
+  /* Chip tray above community cards */
+  .chip-disc { width: 20px; }
+  .chip-tray { gap: 3px; }
+  .table-pot-amount { font-size: 11px; }
+  .table-cards { gap: 3px; }
 
   /* ── Auth ── */
   .auth-card {
@@ -1199,6 +1209,18 @@ body {
   .winner-title { font-size: 26px; }
   .winner-hand { font-size: 14px; margin-bottom: 18px; }
   .btn-play-again { width: 100%; padding: 13px 24px; font-size: 14px; }
+
+  /* ── Very small phones (iPhone SE etc.) ── */
+  @media (max-width: 380px) {
+    .table-wrap { height: min(360px, 80vw); }
+    .seat-chip { min-width: 44px; }
+    .seat-chip-name { font-size: 6px; }
+    .seat-chip-stack { font-size: 8px; }
+    .pcard { width: 20px; height: 28px; }
+    .pcard-lg { width: 26px; height: 36px; }
+    .pcard-suit-center { font-size: 9px; }
+    .pcard-lg .pcard-suit-center { font-size: 12px; }
+  }
 }
 
 /* ── Flying Chip Animations ──────────────────────────────────────────────── */
