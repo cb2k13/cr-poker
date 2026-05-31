@@ -6,7 +6,7 @@ export default function GameControls({ gameState, onAction, disabled }) {
 
   const toCall = Math.min(currentBet - playerBet, playerChips);
   const canCheck = currentBet === playerBet;
-  const canCall = toCall > 0 && toCall < playerChips;
+  const canCall = toCall > 0;
   const canRaise = playerChips > toCall;
   const minRaise = Math.max(bigBlind, currentBet * 2 - playerBet);
 
@@ -72,7 +72,7 @@ export default function GameControls({ gameState, onAction, disabled }) {
         <button
           className="action-btn btn-call"
           onClick={() => onAction('call')}
-          disabled={disabled || !canCall && playerChips <= toCall}
+          disabled={disabled}
         >
           {playerChips <= toCall ? `ALL IN +${playerChips}` : `CALL ${toCall}`}
         </button>
