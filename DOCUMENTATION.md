@@ -18,9 +18,7 @@ Betting proceeds clockwise through four streets. During each street a player can
 
 The front end is a React 18 single-page application. React provides the declarative component model that drives all user interface state: which cards are visible, whose turn it is, what the current pot size is, and which animations are playing. The root component `App.jsx` reads authentication state from a global context and conditionally renders either the authentication screen or the game screen, so there is effectively no client-side router — just a binary switch between two top-level views.
 
-Vite serves as the build tool and development server. During development it runs on port 5173 and proxies all `/api` requests to the Express server running on port 3001, which means the front end never has to know the server's address in development. For production the front end is built with `vite build` into a static `dist/` directory and deployed to Vercel, while a separate environment variable (`VITE_API_URL`) points the Axios client at the production backend on Render.
-
-State inside the game lives almost entirely in `GamePage.jsx`, which holds roughly twenty pieces of `useState` — the deck, each player's cards and chip stack, the community cards, pot totals, current bets, whose turn it is, the current betting round, animation triggers, and so on. React's reconciliation engine re-renders only the parts of the UI that depend on changed state, keeping the interface responsive even when many state slices update in sequence during an automated bot turn.
+State inside the game lives almost entirely in `GamePage.jsx`, which holds about twenty pieces of `useState` — the deck, each player's cards and chip stack, the community cards, pot totals, current bets, whose turn it is, the current betting round, animation triggers, and so on. React's reconciliation engine re-renders only the parts of the UI that depend on changed state, keeping the interface responsive even when many state slices update in sequence during an automated bot turn.
 
 ---
 
@@ -28,7 +26,7 @@ State inside the game lives almost entirely in `GamePage.jsx`, which holds rough
 
 Authentication state is managed by a React Context defined in `AuthContext.jsx`. When the application first loads, the context provider checks localStorage for a saved JWT token. If one is found it calls `GET /api/profile` on the back end to verify the token and restore the user object (username, chip balance, win/loss record). If the token is missing or invalid it is removed and the user is shown the login screen. Once logged in, the token and user object are saved to context so that every descendant component can read them without prop drilling.
 
-Supabase acts as the hosted PostgreSQL database layer. The Supabase JavaScript client is initialized in `supabase.js` and used on both the client and the server. On the server it executes parameterized SQL queries against the `users`, `hand_history`, and leaderboard tables. The client also has a Supabase instance available for Google OAuth flows, where Supabase handles the OAuth redirect and returns a session that the back end then validates before issuing its own JWT.
+Supabase acts as the hosted PostgreSQL database. The Supabase JavaScript client is initialized in `supabase.js` and used on both the client and the server. On the server it executes parameterized SQL queries against the `users`, `hand_history`, and leaderboard tables. The client also has a Supabase instance available for Google OAuth flows, where Supabase handles the OAuth redirect and returns a session that the back end then validates before issuing its own JWT.
 
 ---
 
